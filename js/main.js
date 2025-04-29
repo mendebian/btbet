@@ -5,7 +5,7 @@ import {
     databaseRef,
     set,
     onValue
-} from '../../firebase.js';
+} from './firebase.js';
 
 // Configurações da API
 const RAPIDAPI_KEY = '87e01ce830msh15680eada34ceddp15c0edjsna08c20a49482'; // Substitua pela sua chave

@@ -6,7 +6,7 @@ import {
     database, 
     set, 
     databaseRef  
-} from '../../firebase.js';
+} from './firebase.js';
 
 // Elementos
 const signInForm = document.getElementById('sign-in');
