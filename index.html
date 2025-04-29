@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0", user-scalable=no>
+    <title>BTBet | Início</title>
+    <link rel="icon" href="icon.png" type="image/x-icon">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" src="js/main.js" defer></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo">BTBET <i class="fas fa-futbol"></i></div>
+        <div class="header-actions">
+            <div class="balance">BTBucks: <span>0</span></div>
+            <button id="login-btn" class="login-btn">
+                <i class="fas fa-user"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="content">
+        <div class="filters">
+            <button id="league-filter-btn" class="filter-btn">
+                Filtrar <i class="fas fa-filter"></i>
+            </button>
+        </div>
+        <div id="matches-container"></div>
+        <button id="active-bets-btn" class="floating-btn">
+            <i class="fas fa-ticket-alt"></i>
+            <span class="badge">1</span>
+        </button>
+    </div>
+
+    <div id="active-bets-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3 class="modal-title"><i class="fas fa-ticket-alt"></i> Minhas Apostas</h3>
+            <div id="active-bets-content" class="active-bets-container">
+                <p class="empty-bets">Nenhuma aposta ativa</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="league-modal" class="modal">
+        <div class="modal-content large">
+            <span class="close-modal close-league-modal">&times;</span>
+            <h3 class="modal-title"><i class="fas fa-filter"></i> Filtrar</h3>
+            <div id="league-list" class="league-list"></div>
+            <div class="modal-actions">
+                <div>
+                    <button id="select-all-leagues" class="btn-secondary">Marcar todos</button>
+                    <button id="deselect-all-leagues" class="btn-secondary">Desmarcar todos</button>
+                </div>
+                <button id="apply-leagues" class="btn-primary">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="odds-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal close-odds-modal">&times;</span>
+            <h3 class="modal-title"><i class="fas fa-chart-line"></i> Odds</h3>
+            <div id="odds-game-info"></div>
+            <div id="odds-loading" class="loading" style="display: none;">
+                 <i class="fas fa-spinner fa-spin"></i> Carregando odds...
+            </div>
+            <div id="odds-error" class="error" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i> Erro ao carregar odds.
+            </div>
+
+            <div id="odds-list"></div>
+
+            <div id="odds-bet-section" style="display: none;">
+                <div class="bet-selection">
+                    <p id="selected-odd-info"></p>
+                </div>                
+                <div class="bet-input-group">
+                    <input type="number" id="odds-bet-amount-input" class="bet-amount-input" placeholder="BTBucks" min="1">
+                    <button id="place-bet-modal-btn" class="btn-primary bet-btn">Apostar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>Desenvolvido por Lucas de Morais</p>
+            <div class="social-links">
+                <a href="https://twitter.com/fluclaren" target="_blank" aria-label="Twitter">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="https://br.linkedin.com/in/lucasdemoraism" target="_blank" aria-label="LinkedIn">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://github.com/mendebian" target="_blank" aria-label="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

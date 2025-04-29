@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0", user-scalable=no>
+  <title>BTBet | Login</title>
+  <link rel="icon" href="icon.png" type="image/x-icon">
+  <link rel="stylesheet" href="css/login.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script type="module" src="js/login.js" defer></script>
+</head>
+<body>
+  <div id="loading">
+    <div class="loader"></div>
+  </div>
+
+  <div class="container">
+    <div class="logo">BTBET <i class="fas fa-futbol"></i></div>
+    <div id="sign-in" class="form-box">
+      <input type="email" class="sign-in-email" placeholder="Email">
+      <input type="password" class="sign-in-password" placeholder="Senha">
+      <button id="btn-sign-in">Entrar</button>
+      <p>Não tem uma conta? <span id="link-to-sign-up">Cadastre-se</span></p>
+    </div>
+
+    <div id="sign-up" class="form-box" style="display: none;">
+      <input type="text" class="sign-up-name" placeholder="Nome de Usuário">
+      <input type="email" class="sign-up-email" placeholder="Email">
+      <input type="password" class="sign-up-password" placeholder="Senha">
+      <input type="password" class="sign-up-check" placeholder="Confirmar Senha">
+      <button id="btn-sign-up">Cadastrar</button>
+      <p>Já tem uma conta? <span id="link-to-sign-in">Entrar</span></p>
+    </div>
+  </div>
+
+  <p class="terms">Ao se cadastrar, você concorda com os nossos <a href="#" target="_blank">Termos de Uso</a>.</p>
+</body>
+</html>
