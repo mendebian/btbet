@@ -901,6 +901,9 @@ async function checkBetResult(bet) {
             state.user.data.completedBets.push(bet);
 
             await saveUserData();
+            updateBalanceDisplay();
+            updateActiveBetsModal();
+            updateActiveBetsBtn();
         }
     } catch (err) {
         console.error("Erro ao verificar resultado da aposta:", err);
