@@ -4,7 +4,8 @@ import {
     get,
     databaseRef,
     set,
-    onValue
+    onValue,
+    push
 } from './firebase.js';
 
 // Configurações da API
@@ -62,6 +63,8 @@ const placeBetModalBtn = document.getElementById('place-bet-modal-btn');
 // --- Variáveis Globais para o Modal de Odds ---
 let currentModalBetData = null;
 let currentGameDataForModal = null;
+
+const betsAvailable = [1, 3, 5, 6, 7, 8, 10, 12, 13, 16, 17, 20, 26, 27, 28, 32, 34, 35, 36, 38, 39, 40, 41, 42, 46, 48];
 
 // --- Inicialização ---
 document.addEventListener('DOMContentLoaded', async () => {
@@ -203,6 +206,7 @@ async function saveUserData() {
         },
         bucks: state.user.data.bucks !== undefined ? state.user.data.bucks : 0,
         activeBets: Array.isArray(state.user.data.activeBets) ? state.user.data.activeBets : [],
+        completedBets: Array.isArray(state.user.data.completedBets) ? state.user.data.completedBets : [],
         selectedLeagues: Array.isArray(state.user.data.selectedLeagues) ? state.user.data.selectedLeagues : []
     };
 
@@ -573,7 +577,8 @@ async function fetchOddsForFixture(fixtureId) {
             const bets = bookmaker?.bets || [];
 
             if (bets.length) {
-                return bets;
+                console.log(bets);
+                return bets.filter(bet => betsAvailable.includes(bet.id));;
             } else {
                 console.warn(`Nenhuma aposta (bets) encontrada para fixture: ${fixtureId}`);
                 return [];
@@ -726,15 +731,12 @@ function updateActiveBetsModal() {
     const sortedBets = [...state.user.data.activeBets].sort((a, b) => { const dateA = a.timestamp ? new Date(a.timestamp) : 0; const dateB = b.timestamp ? new Date(b.timestamp) : 0; return dateB - dateA; });
     let betsHtml = '';
     sortedBets.forEach(bet => {
-        console.log(bet);
+        checkBetResult(bet);
 
         const displayBetName = bet.market.name; 
         const displaySelection = bet.selection; 
         const displayOdd = bet.odd; 
-
         const displayAmount = bet.amount; 
-        const displayPotentialWin = bet.potentialWin; 
-        const displayLeague = bet.league; 
         const displayTeams = bet.teams;
 
         betsHtml += `
@@ -780,3 +782,127 @@ function mapOutcomeToBetType(marketId, outcomeValue) { const valueLower = outcom
 function mapOutcomeToDisplayName(marketId, outcomeValue) { const internalType = mapOutcomeToBetType(marketId, outcomeValue); const mappedText = betTypeToText(internalType); if (mappedText !== internalType) { return mappedText; } return outcomeValue.charAt(0).toUpperCase() + outcomeValue.slice(1); }
 
 console.log("main.js carregado e pronto.");
+
+async function checkBetResult(bet) {
+    const id = bet.gameId;
+    const url = `https://${API_HOST}/v3/fixtures?id=${id}`;
+
+    try {
+        const data = await fetchApiData(url);
+        const response = data.response[0];
+        const fixture = response.fixture;
+        
+        if (fixture.status.short === 'FT') {
+            const { goals, score } = response;
+            const { halftime, fulltime, extratime } = score;
+            const potential = bet.potentialWin;
+            const market = bet.market;
+            const selection = bet.selection;
+
+            const matchWinner = goals.home > goals.away ? 'home' : goals.home < goals.away ? 'away' : 'draw';
+            let betStatus = false;
+
+            if (market.id === 1) { // Match Winner
+                betStatus = matchWinner === selection.toLowerCase() ? 'green' : 'red';
+            } else if (market.id === 3) { //Second Half Winner
+                const homeScore = fulltime.home - halftime.home;
+                const awayScore = fulltime.away - halftime.away;
+                const secondHalfWinner = homeScore > awayScore ? 'home' : homeScore < awayScore ? 'away' : 'draw';
+                betStatus = secondHalfWinner === selection.toLowerCase() ? 'green' : 'red';
+            } else if (market.id === 5) {  // Goals Over/Under
+                const totalGoals = goals.home + goals.away;
+                const params = selection.split(' ');
+                betStatus = params[0] === "Over" ? (totalGoals > parseInt(params[1]) ? 'green' : 'red') : (totalGoals < parseInt(params[1]) ? 'green' : 'red');
+            } else if (market.id === 6) { // Goals Over/Under First Half
+                const totalGoals = halftime.home + halftime.away;
+                const params = selection.split(' ');
+                betStatus = params[0] === "Over" ? (totalGoals > parseInt(params[1]) ? 'green' : 'red') : (totalGoals < parseInt(params[1]) ? 'green' : 'red');
+            } else if (market.id === 7) { // HT/FT Double
+                const selectedChances = selection.split('/');
+                const firstHalfWinner = halftime.home > halftime.away ? 'home' : halftime.home < halftime.away ? 'away' : 'draw';
+                betStatus = (selectedChances[0].toLowerCase() === firstHalfWinner) && (selectedChances[1].toLowerCase() === matchWinner) ? 'green' : 'red';
+            } else if (market.id === 8) { // Both Teams Score
+                betStatus = (goals.home > 0 && goals.away > 0) === (selection.toLowerCase() === 'yes') ? 'green' : 'red';
+            } else if (market.id === 10) { // Exact Score
+                const exactScore = `${goals.home}:${goals.away}`;
+                betStatus = exactScore === selection ? 'green' : 'red';
+            } else if (market.id === 12) { // Double Chance
+                const selectedChances = selection.split('/');
+                betStatus = selectedChances.map(chance => chance.toLowerCase()).includes(matchWinner) ? 'green' : 'red';
+            } else if (market.id === 13) { // First Half Winner
+                const firstHalfWinner = halftime.home > halftime.away ? 'home' : halftime.home < halftime.away ? 'away' : 'draw';
+                betStatus = firstHalfWinner === selection.toLowerCase() ? 'green' : 'red';
+            } else if (market.id === 16) { // Total - Home
+                const totalHome = goals.home;
+                const params = selection.split(' ');
+                betStatus = params[0] === "Over" ? (totalHome > parseInt(params[1]) ? 'green' : 'red') : (totalHome < parseInt(params[1]) ? 'green' : 'red');
+            } else if (market.id === 17) { // Total - Away
+                const totalAway = goals.away;
+                const params = selection.split(' ');
+                betStatus = params[0] === "Over" ? (totalAway > parseInt(params[1]) ? 'green' : 'red') : (totalAway < parseInt(params[1]) ? 'green' : 'red');
+            } else if (market.id === 20) {  // Double Chance - First Half
+                const selectedChances = selection.split('/');
+                const firstHalfWinner = halftime.home > halftime.away ? 'home' : halftime.home < halftime.away ? 'away' : 'draw';
+                betStatus = (selectedChances[0].toLowerCase() === firstHalfWinner) && (selectedChances[1].toLowerCase() === matchWinner) ? 'green' : 'red';
+            } else if (market.id === 20) { // Goals Over/Under - Second Half
+                const totalGoals = goals.home + goals.away - (halftime.home + halftime.away) - (fulltime?.home || 0 + fulltime?.away || 0);
+                const params = selection.split(' ');
+                betStatus = params[0] === "Over" ? (totalGoals > parseInt(params[1]) ? 'green' : 'red') : (totalGoals < parseInt(params[1]) ? 'green' : 'red');
+            } else if (market.id === 27) { // Total - Home
+                const totalHome = goals.home;
+                const params = selection.split(' ');
+                betStatus = params[0] === "Over" ? (totalHome > parseInt(params[1]) ? 'green' : 'red') : (totalHome < parseInt(params[1]) ? 'green' : 'red');
+            } else if (market.id === 28) { // Total - Away
+                const totalAway = goals.away;
+                const params = selection.split(' ');
+                betStatus = params[0] === "Over" ? (totalAway > parseInt(params[1]) ? 'green' : 'red') : (totalAway < parseInt(params[1]) ? 'green' : 'red');
+            } else if (market.id === 32) { // Win Both Halves
+                const homeScore = fulltime.home - halftime.home;
+                const awayScore = fulltime.away - halftime.away;
+                const secondHalfWinner = homeScore > awayScore ? 'home' : homeScore < awayScore ? 'away' : 'draw';
+                const firstHalfWinner = halftime.home > halftime.away ? 'home' : halftime.home < halftime.away ? 'away' : 'draw';
+                betStatus = firstHalfWinner === secondHalfWinner ? 'green' : 'red';
+            } else if (market.id === 34) { // Both Teams Score - First Half
+                betStatus = halftime.home > 0 && halftime.away > 0 === (selection === 'Yes') ? 'green' : 'red';
+            } else if (market.id === 35) { // Both Teams To Score - Second Half
+                const homeScore = fulltime.home - halftime.home;
+                const awayScore = fulltime.away - halftime.away;
+                betStatus = homeScore > 0 && awayScore > 0 === (selection === 'Yes') ? 'green' : 'red';
+            } else if (market.id === 36) { // Win To Nil
+                betStatus = (selection.toLowerCase() === matchWinner && goals[selection.toLowerCase() === 'home' ? 'away' : 'home'] === 0) ? 'green' : 'red';
+            } else if (market.id === 38) { // Exact Goals Number
+                betStatus = selection.toLowerCase() === 'more 7' ? (goals.home + goals.away >= 7 ? 'green' : 'red') : (goals.home + goals.away === parseInt(selection) ? 'green' : 'red');
+            } else if (market.id === 39) { // To Win Either Half
+                const homeScore = fulltime.home - halftime.home;
+                const awayScore = fulltime.away - halftime.away;
+                const secondHalfWinner = homeScore > awayScore ? 'home' : homeScore < awayScore ? 'away' : 'draw';
+                const firstHalfWinner = halftime.home > halftime.away ? 'home' : halftime.home < halftime.away ? 'away' : 'draw';
+                betStatus = (firstHalfWinner === selection.toLowerCase() || secondHalfWinner === selection.toLowerCase()) ? 'green' : 'red';
+            } else if (market.id === 40) { // Home Team Exact Goals Number
+                betStatus = selection.toLowerCase() === 'more 3' ? (fulltime.home >= 3 ? 'green' : 'red') : (fulltime.home === parseInt(selection) ? 'green' : 'red');
+            } else if (market.id === 41) { // Away Team Exact Goals Number
+                betStatus = selection.toLowerCase() === 'more 3' ? (fulltime.away >= 3 ? 'green' : 'red') : (fulltime.away === parseInt(selection) ? 'green' : 'red');
+            } else if (market.id === 42) { // Second Half Exact Goals Number
+                const homeScore = fulltime.home - halftime.home;
+                const awayScore = fulltime.away - halftime.away;
+                betStatus = selection.toLowerCase() === 'more 5' ? (homeScore + awayScore >= 5 ? 'green' : 'red') : (homeScore + awayScore === parseInt(selection) ? 'green' : 'red');
+            } else if (market.id === 46) { // Exact Goals Number - First Half
+                betStatus = selection.toLowerCase() === 'more 5' ? (homeScore + awayScore >= 5 ? 'green' : 'red') : (homeScore + awayScore === parseInt(selection) ? 'green' : 'red');
+            } else if (market.id === 48) { // To Score In Both Halves By Teams
+                const scoredBothHalves = (team) => halftime[team] > 0 && (fulltime[team] - halftime[team]) > 0;
+                betStatus = scoredBothHalves(selection.toLowerCase()) ? 'green' : 'red';
+            }
+
+            bet.status = betStatus;
+            bet.settledAt = new Date().toISOString();
+            state.user.data.bucks += betStatus === 'green' ? potential : 0;
+            state.user.data.activeBets = state.user.data.activeBets.filter(activeBet => activeBet.id !== bet.id);
+            if (!state.user.data.completedBets) state.user.data.completedBets = [];
+            state.user.data.completedBets.push(bet);
+
+            await saveUserData();
+        }
+    } catch (err) {
+        console.error("Erro ao verificar resultado da aposta:", err);
+    }
+}

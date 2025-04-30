@@ -69,7 +69,7 @@ async function handleSignUp(event) {
         setLoading(true);
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await saveUserData(userCredential.user, name);
-        window.location.href = './index.html';
+        window.location.href = '/';
     } catch (error) {
         console.error('Erro ao cadastrar:', error.message);
         alert('Erro ao cadastrar. Verifique seus dados.');
